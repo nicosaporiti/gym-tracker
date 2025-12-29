@@ -243,7 +243,7 @@ export default function GymTracker() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
   };
 
   const exportToJSON = () => {
@@ -422,6 +422,36 @@ export default function GymTracker() {
     }
   };
 
+  const deleteWorkout = async (id, e) => {
+    e.stopPropagation();
+    if (window.confirm('¿Eliminar este entrenamiento?')) {
+      try {
+        const { error } = await supabase.from('workouts').delete().eq('id', id);
+        if (error) throw error;
+        setWorkouts(workouts.filter((w) => w.id !== id));
+        setSelectedWorkoutDetail(null);
+      } catch (error) {
+        console.error('Error eliminando entrenamiento:', error);
+        alert('Error al eliminar el entrenamiento');
+      }
+    }
+  };
+
+  const editWorkout = (workout, e) => {
+    e.stopPropagation();
+    setSelectedRoutine({
+      ...workout,
+      isEditing: true,
+      name: workout.routine_name,
+      exercises: workout.exercises.map((ex) => ({
+        ...ex,
+        sets: ex.sets,
+      })),
+    });
+    setSelectedWorkoutDetail(null);
+    setActiveTab('workout');
+  };
+
   const startWorkout = (routine) => {
     setSelectedRoutine({
       ...routine,
@@ -454,19 +484,32 @@ export default function GymTracker() {
       workoutDate = getLocalDateString();
     }
 
-    try {
-      const { error } = await supabase.from('workouts').insert({
-        user_id: user.id,
-        routine_id: selectedRoutine.id,
-        routine_name: selectedRoutine.name,
-        date: workoutDate,
-        exercises: selectedRoutine.exercises.map((ex) => ({
-          name: ex.name,
-          sets: ex.sets,
-        })),
-      });
+    const workoutData = {
+      routine_name: selectedRoutine.name,
+      date: workoutDate,
+      exercises: selectedRoutine.exercises.map((ex) => ({
+        name: ex.name,
+        sets: ex.sets,
+      })),
+    };
 
-      if (error) throw error;
+    try {
+      if (selectedRoutine.isEditing) {
+        // Update existing workout
+        const { error } = await supabase
+          .from('workouts')
+          .update(workoutData)
+          .eq('id', selectedRoutine.id);
+        if (error) throw error;
+      } else {
+        // Insert new workout
+        const { error } = await supabase.from('workouts').insert({
+          ...workoutData,
+          user_id: user.id,
+          routine_id: selectedRoutine.id,
+        });
+        if (error) throw error;
+      }
 
       await loadData();
       setSelectedRoutine(null);
@@ -916,6 +959,7 @@ export default function GymTracker() {
                   className={`p-4 sm:p-6 rounded-lg ${theme.card} border ${theme.border}`}
                 >
                   <h2 className='text-xl sm:text-2xl font-bold mb-3 sm:mb-4'>
+                    {selectedRoutine.isEditing && <span className="text-blue-500">Editando: </span>}
                     {selectedRoutine.name}
                   </h2>
                   <div className='space-y-2'>
@@ -1007,7 +1051,7 @@ export default function GymTracker() {
                     className='flex-1 py-3 sm:py-4 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
                   >
                     <Save className='w-5 h-5' />
-                    Guardar Entrenamiento
+                    {selectedRoutine.isEditing ? 'Actualizar Entrenamiento' : 'Guardar Entrenamiento'}
                   </button>
                   <button
                     onClick={() => setSelectedRoutine(null)}
@@ -1243,9 +1287,27 @@ export default function GymTracker() {
                               <div
                                 className={`mt-2 p-3 sm:p-4 rounded-lg border ${theme.border} ${theme.card} space-y-2`}
                               >
-                                <h4 className='font-semibold text-sm sm:text-base mb-2'>
-                                  Resumen por Ejercicio
-                                </h4>
+                                <div className='flex items-center justify-between mb-2'>
+                                  <h4 className='font-semibold text-sm sm:text-base'>
+                                    Resumen por Ejercicio
+                                  </h4>
+                                  <div className='flex gap-1 sm:gap-2'>
+                                    <button
+                                      onClick={(e) => editWorkout(workout, e)}
+                                      className={`p-2 rounded-lg ${theme.hover} touch-manipulation`}
+                                      aria-label='Editar entrenamiento'
+                                    >
+                                      <Edit2 className='w-4 h-4' />
+                                    </button>
+                                    <button
+                                      onClick={(e) => deleteWorkout(workout.id, e)}
+                                      className='p-2 rounded-lg hover:bg-red-600 active:bg-red-700 text-red-500 hover:text-white touch-manipulation'
+                                      aria-label='Eliminar entrenamiento'
+                                    >
+                                      <Trash2 className='w-4 h-4' />
+                                    </button>
+                                  </div>
+                                </div>
                                 {getWorkoutExerciseSummary(workout).map(
                                   (exercise, idx) => (
                                     <div

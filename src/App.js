@@ -286,16 +286,19 @@ export default function GymTracker() {
     <div
       className={`min-h-screen ${theme.bg} ${theme.text} transition-colors duration-200`}
     >
-      <div className='max-w-6xl mx-auto p-4'>
-        <div className='flex items-center justify-between mb-8'>
-          <div className='flex items-center gap-3'>
-            <Dumbbell className='w-8 h-8' />
-            <h1 className='text-3xl font-bold'>Gym Tracker</h1>
+      <div className='max-w-6xl mx-auto p-3 sm:p-4'>
+        <div className='flex items-center justify-between mb-4 sm:mb-8'>
+          <div className='flex items-center gap-2 sm:gap-3'>
+            <Dumbbell className='w-6 h-6 sm:w-8 sm:h-8' />
+            <h1 className='text-xl sm:text-2xl md:text-3xl font-bold'>
+              Gym Tracker
+            </h1>
           </div>
-          <div className='flex gap-2'>
+          <div className='flex gap-1 sm:gap-2'>
             <button
               onClick={toggleDarkMode}
-              className={`p-2 rounded-lg ${theme.card} ${theme.hover}`}
+              className={`p-2 rounded-lg ${theme.card} ${theme.hover} touch-manipulation`}
+              aria-label='Toggle dark mode'
             >
               {darkMode ? (
                 <Sun className='w-5 h-5' />
@@ -305,7 +308,8 @@ export default function GymTracker() {
             </button>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-lg ${theme.card} ${theme.hover}`}
+              className={`p-2 rounded-lg ${theme.card} ${theme.hover} touch-manipulation`}
+              aria-label='Settings'
             >
               <Settings className='w-5 h-5' />
             </button>
@@ -313,40 +317,41 @@ export default function GymTracker() {
         </div>
 
         {showSettings && (
-          <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
+          <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50'>
             <div
-              className={`${theme.card} rounded-lg p-6 max-w-md w-full space-y-4`}
+              className={`${theme.card} rounded-lg p-4 sm:p-6 max-w-md w-full space-y-3 sm:space-y-4 max-h-[90vh] overflow-y-auto`}
             >
-              <div className='flex items-center justify-between mb-4'>
-                <h2 className='text-2xl font-bold'>Configuración</h2>
+              <div className='flex items-center justify-between mb-3 sm:mb-4'>
+                <h2 className='text-xl sm:text-2xl font-bold'>Configuración</h2>
                 <button
                   onClick={() => setShowSettings(false)}
-                  className={`p-2 rounded-lg ${theme.hover}`}
+                  className={`p-2 rounded-lg ${theme.hover} touch-manipulation`}
+                  aria-label='Close settings'
                 >
                   <X className='w-5 h-5' />
                 </button>
               </div>
 
-              <div className='space-y-3'>
+              <div className='space-y-2 sm:space-y-3'>
                 <button
                   onClick={exportToJSON}
-                  className='w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 flex items-center justify-center gap-2'
+                  className='w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 active:bg-blue-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
                 >
-                  <Download className='w-5 h-5' />
-                  Exportar a JSON (Backup completo)
+                  <Download className='w-5 h-5 flex-shrink-0' />
+                  <span className='text-center'>Exportar a JSON</span>
                 </button>
 
                 <button
                   onClick={exportToCSV}
-                  className='w-full py-3 px-4 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 flex items-center justify-center gap-2'
+                  className='w-full py-3 px-4 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
                 >
-                  <Download className='w-5 h-5' />
-                  Exportar entrenamientos a CSV
+                  <Download className='w-5 h-5 flex-shrink-0' />
+                  <span className='text-center'>Exportar a CSV</span>
                 </button>
 
-                <label className='w-full py-3 px-4 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 flex items-center justify-center gap-2 cursor-pointer'>
-                  <Upload className='w-5 h-5' />
-                  Importar desde JSON
+                <label className='w-full py-3 px-4 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 active:bg-purple-800 flex items-center justify-center gap-2 cursor-pointer touch-manipulation text-sm sm:text-base'>
+                  <Upload className='w-5 h-5 flex-shrink-0' />
+                  <span className='text-center'>Importar desde JSON</span>
                   <input
                     type='file'
                     accept='.json'
@@ -355,24 +360,26 @@ export default function GymTracker() {
                   />
                 </label>
 
-                <div className={`border-t ${theme.border} pt-3`}>
+                <div className={`border-t ${theme.border} pt-2 sm:pt-3`}>
                   <button
                     onClick={clearAllData}
-                    className='w-full py-3 px-4 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 flex items-center justify-center gap-2'
+                    className='w-full py-3 px-4 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 active:bg-red-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
                   >
-                    <Trash2 className='w-5 h-5' />
-                    Borrar todos los datos
+                    <Trash2 className='w-5 h-5 flex-shrink-0' />
+                    <span className='text-center'>Borrar todos los datos</span>
                   </button>
                 </div>
               </div>
 
-              <div className={`text-sm ${theme.textSecondary} mt-4`}>
+              <div
+                className={`text-xs sm:text-sm ${theme.textSecondary} mt-3 sm:mt-4`}
+              >
                 <p>
-                  <strong>JSON:</strong> Incluye rutinas y entrenamientos. Ideal
-                  para backup completo.
+                  <strong>JSON:</strong> Backup completo de rutinas y
+                  entrenamientos.
                 </p>
-                <p className='mt-2'>
-                  <strong>CSV:</strong> Solo entrenamientos. Ideal para análisis
+                <p className='mt-1 sm:mt-2'>
+                  <strong>CSV:</strong> Solo entrenamientos para análisis
                   externo.
                 </p>
               </div>
@@ -380,7 +387,9 @@ export default function GymTracker() {
           </div>
         )}
 
-        <div className={`flex gap-2 mb-6 p-1 rounded-lg ${theme.card}`}>
+        <div
+          className={`flex gap-1 sm:gap-2 mb-4 sm:mb-6 p-1 rounded-lg ${theme.card}`}
+        >
           {[
             { id: 'routines', label: 'Rutinas', icon: Dumbbell },
             { id: 'workout', label: 'Entrenar', icon: Calendar },
@@ -389,24 +398,24 @@ export default function GymTracker() {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2.5 sm:py-3 px-2 sm:px-4 rounded-lg transition-colors touch-manipulation text-xs sm:text-sm ${
                 activeTab === id
                   ? 'bg-blue-600 text-white'
                   : `${theme.hover} ${theme.textSecondary}`
               }`}
             >
-              <Icon className='w-5 h-5' />
-              {label}
+              <Icon className='w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0' />
+              <span className='hidden xs:inline sm:inline'>{label}</span>
             </button>
           ))}
         </div>
 
         {activeTab === 'routines' && (
-          <div className='space-y-4'>
+          <div className='space-y-3 sm:space-y-4'>
             {!editingRoutine && (
               <button
                 onClick={createRoutine}
-                className='w-full py-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 flex items-center justify-center gap-2'
+                className='w-full py-3 sm:py-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 active:bg-blue-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
               >
                 <Plus className='w-5 h-5' />
                 Nueva Rutina
@@ -415,7 +424,7 @@ export default function GymTracker() {
 
             {editingRoutine && (
               <div
-                className={`p-6 rounded-lg ${theme.card} border ${theme.border} space-y-4`}
+                className={`p-4 sm:p-6 rounded-lg ${theme.card} border ${theme.border} space-y-3 sm:space-y-4`}
               >
                 <input
                   type='text'
@@ -427,14 +436,14 @@ export default function GymTracker() {
                       name: e.target.value,
                     })
                   }
-                  className={`w-full px-4 py-2 rounded-lg border ${theme.input}`}
+                  className={`w-full px-4 py-3 sm:py-2 rounded-lg border ${theme.input} text-base sm:text-sm`}
                 />
 
                 <div className='space-y-3'>
                   {editingRoutine.exercises.map((exercise, index) => (
                     <div
                       key={index}
-                      className={`p-4 rounded-lg border ${theme.border} space-y-2`}
+                      className={`p-3 sm:p-4 rounded-lg border ${theme.border} space-y-2 sm:space-y-2`}
                     >
                       <div className='flex items-center gap-2'>
                         <input
@@ -444,13 +453,14 @@ export default function GymTracker() {
                           onChange={(e) =>
                             updateExercise(index, 'name', e.target.value)
                           }
-                          className={`flex-1 px-3 py-2 rounded-lg border ${theme.input}`}
+                          className={`flex-1 px-3 py-3 sm:py-2 rounded-lg border ${theme.input} text-base sm:text-sm`}
                         />
                         <button
                           onClick={() => removeExercise(index)}
-                          className='p-2 rounded-lg hover:bg-red-600 text-red-500 hover:text-white'
+                          className='p-2.5 sm:p-2 rounded-lg hover:bg-red-600 active:bg-red-700 text-red-500 hover:text-white touch-manipulation flex-shrink-0'
+                          aria-label='Eliminar ejercicio'
                         >
-                          <Trash2 className='w-4 h-4' />
+                          <Trash2 className='w-4 h-4 sm:w-4 sm:h-4' />
                         </button>
                       </div>
                       <div className='flex gap-2'>
@@ -465,7 +475,7 @@ export default function GymTracker() {
                               parseInt(e.target.value)
                             )
                           }
-                          className={`w-24 px-3 py-2 rounded-lg border ${theme.input}`}
+                          className={`w-1/2 sm:w-24 px-3 py-3 sm:py-2 rounded-lg border ${theme.input} text-base sm:text-sm`}
                         />
                         <input
                           type='number'
@@ -478,7 +488,7 @@ export default function GymTracker() {
                               parseInt(e.target.value)
                             )
                           }
-                          className={`w-24 px-3 py-2 rounded-lg border ${theme.input}`}
+                          className={`w-1/2 sm:w-24 px-3 py-3 sm:py-2 rounded-lg border ${theme.input} text-base sm:text-sm`}
                         />
                       </div>
                     </div>
@@ -488,24 +498,24 @@ export default function GymTracker() {
                 <div className='flex gap-2'>
                   <button
                     onClick={addExercise}
-                    className={`flex-1 py-2 rounded-lg border ${theme.border} ${theme.hover} flex items-center justify-center gap-2`}
+                    className={`flex-1 py-3 sm:py-2 rounded-lg border ${theme.border} ${theme.hover} active:opacity-80 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base`}
                   >
                     <Plus className='w-4 h-4' />
                     Agregar Ejercicio
                   </button>
                 </div>
 
-                <div className='flex gap-2'>
+                <div className='flex flex-col sm:flex-row gap-2'>
                   <button
                     onClick={saveRoutine}
-                    className='flex-1 py-3 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 flex items-center justify-center gap-2'
+                    className='flex-1 py-3 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
                   >
                     <Save className='w-5 h-5' />
                     Guardar
                   </button>
                   <button
                     onClick={() => setEditingRoutine(null)}
-                    className='flex-1 py-3 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 flex items-center justify-center gap-2'
+                    className='flex-1 py-3 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 active:bg-red-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
                   >
                     <X className='w-5 h-5' />
                     Cancelar
@@ -514,42 +524,46 @@ export default function GymTracker() {
               </div>
             )}
 
-            <div className='grid gap-4'>
+            <div className='grid gap-3 sm:gap-4'>
               {routines.map((routine) => (
                 <div
                   key={routine.id}
-                  className={`p-6 rounded-lg ${theme.card} border ${theme.border}`}
+                  className={`p-4 sm:p-6 rounded-lg ${theme.card} border ${theme.border}`}
                 >
-                  <div className='flex items-start justify-between mb-4'>
-                    <div>
-                      <h3 className='text-xl font-bold mb-2'>{routine.name}</h3>
-                      <p className={theme.textSecondary}>
+                  <div className='flex items-start justify-between mb-3 sm:mb-4 gap-2'>
+                    <div className='flex-1 min-w-0'>
+                      <h3 className='text-lg sm:text-xl font-bold mb-1 sm:mb-2 truncate'>
+                        {routine.name}
+                      </h3>
+                      <p className={`${theme.textSecondary} text-sm`}>
                         {routine.exercises.length} ejercicios
                       </p>
                     </div>
-                    <div className='flex gap-2'>
+                    <div className='flex gap-1 sm:gap-2 flex-shrink-0'>
                       <button
                         onClick={() => setEditingRoutine(routine)}
-                        className={`p-2 rounded-lg ${theme.hover}`}
+                        className={`p-2 rounded-lg ${theme.hover} touch-manipulation`}
+                        aria-label='Editar rutina'
                       >
                         <Edit2 className='w-5 h-5' />
                       </button>
                       <button
                         onClick={() => deleteRoutine(routine.id)}
-                        className='p-2 rounded-lg hover:bg-red-600 text-red-500 hover:text-white'
+                        className='p-2 rounded-lg hover:bg-red-600 active:bg-red-700 text-red-500 hover:text-white touch-manipulation'
+                        aria-label='Eliminar rutina'
                       >
                         <Trash2 className='w-5 h-5' />
                       </button>
                     </div>
                   </div>
-                  <div className='space-y-2 mb-4'>
+                  <div className='space-y-1.5 sm:space-y-2 mb-3 sm:mb-4'>
                     {routine.exercises.map((ex, i) => (
                       <div
                         key={i}
-                        className={`flex justify-between ${theme.textSecondary}`}
+                        className={`flex justify-between ${theme.textSecondary} text-sm`}
                       >
-                        <span>{ex.name}</span>
-                        <span>
+                        <span className='truncate pr-2'>{ex.name}</span>
+                        <span className='flex-shrink-0'>
                           {ex.sets} × {ex.reps}
                         </span>
                       </div>
@@ -557,7 +571,7 @@ export default function GymTracker() {
                   </div>
                   <button
                     onClick={() => startWorkout(routine)}
-                    className='w-full py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700'
+                    className='w-full py-3 sm:py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 active:bg-blue-800 touch-manipulation text-sm sm:text-base'
                   >
                     Comenzar Entrenamiento
                   </button>
@@ -568,22 +582,24 @@ export default function GymTracker() {
         )}
 
         {activeTab === 'workout' && (
-          <div className='space-y-4'>
+          <div className='space-y-3 sm:space-y-4'>
             {!selectedRoutine ? (
               <div
-                className={`p-8 rounded-lg ${theme.card} border ${theme.border} text-center`}
+                className={`p-6 sm:p-8 rounded-lg ${theme.card} border ${theme.border} text-center`}
               >
-                <Calendar className='w-16 h-16 mx-auto mb-4 opacity-50' />
-                <p className={`text-lg ${theme.textSecondary}`}>
+                <Calendar className='w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 opacity-50' />
+                <p
+                  className={`text-base sm:text-lg ${theme.textSecondary} px-2`}
+                >
                   Selecciona una rutina desde la pestaña Rutinas para comenzar
                 </p>
               </div>
             ) : (
-              <div className='space-y-4'>
+              <div className='space-y-3 sm:space-y-4'>
                 <div
-                  className={`p-6 rounded-lg ${theme.card} border ${theme.border}`}
+                  className={`p-4 sm:p-6 rounded-lg ${theme.card} border ${theme.border}`}
                 >
-                  <h2 className='text-2xl font-bold mb-4'>
+                  <h2 className='text-xl sm:text-2xl font-bold mb-3 sm:mb-4'>
                     {selectedRoutine.name}
                   </h2>
                   <div className='space-y-2'>
@@ -601,7 +617,7 @@ export default function GymTracker() {
                           date: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 rounded-lg border ${theme.input}`}
+                      className={`w-full px-4 py-3 sm:py-2 rounded-lg border ${theme.input} text-base sm:text-sm`}
                     />
                   </div>
                 </div>
@@ -609,62 +625,77 @@ export default function GymTracker() {
                 {selectedRoutine.exercises.map((exercise, exIndex) => (
                   <div
                     key={exIndex}
-                    className={`p-6 rounded-lg ${theme.card} border ${theme.border}`}
+                    className={`p-4 sm:p-6 rounded-lg ${theme.card} border ${theme.border}`}
                   >
-                    <h3 className='text-xl font-bold mb-4'>{exercise.name}</h3>
-                    <div className='space-y-3'>
+                    <h3 className='text-lg sm:text-xl font-bold mb-3 sm:mb-4'>
+                      {exercise.name}
+                    </h3>
+                    <div className='space-y-2.5 sm:space-y-3'>
                       {exercise.sets.map((set, setIndex) => (
-                        <div key={setIndex} className='flex items-center gap-3'>
-                          <span className={`w-16 ${theme.textSecondary}`}>
-                            Serie {setIndex + 1}
-                          </span>
-                          <input
-                            type='number'
-                            step='0.5'
-                            placeholder='Kg'
-                            value={set.weight || ''}
-                            onChange={(e) =>
-                              updateWorkoutSet(
-                                exIndex,
-                                setIndex,
-                                'weight',
-                                e.target.value
-                              )
-                            }
-                            className={`flex-1 px-3 py-2 rounded-lg border ${theme.input}`}
-                          />
-                          <span className={theme.textSecondary}>×</span>
-                          <input
-                            type='number'
-                            placeholder='Reps'
-                            value={set.reps || ''}
-                            onChange={(e) =>
-                              updateWorkoutSet(
-                                exIndex,
-                                setIndex,
-                                'reps',
-                                e.target.value
-                              )
-                            }
-                            className={`flex-1 px-3 py-2 rounded-lg border ${theme.input}`}
-                          />
+                        <div
+                          key={setIndex}
+                          className={`p-2 sm:p-0 rounded-lg border ${theme.border} sm:border-0`}
+                        >
+                          <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3'>
+                            <span
+                              className={`${theme.textSecondary} text-xs sm:text-sm font-medium sm:font-normal w-16 sm:w-16 flex-shrink-0`}
+                            >
+                              Serie {setIndex + 1}
+                            </span>
+                            <div className='flex items-center gap-2 sm:gap-3 w-full sm:flex-1'>
+                              <input
+                                type='number'
+                                step='0.5'
+                                placeholder='Kg'
+                                value={set.weight || ''}
+                                onChange={(e) =>
+                                  updateWorkoutSet(
+                                    exIndex,
+                                    setIndex,
+                                    'weight',
+                                    e.target.value
+                                  )
+                                }
+                                className={`flex-1 min-w-0 px-3 py-3 sm:py-2 rounded-lg border ${theme.input} text-base sm:text-sm`}
+                              />
+                              <span
+                                className={`${theme.textSecondary} text-base sm:text-lg flex-shrink-0`}
+                              >
+                                ×
+                              </span>
+                              <input
+                                type='number'
+                                placeholder='Reps'
+                                value={set.reps || ''}
+                                onChange={(e) =>
+                                  updateWorkoutSet(
+                                    exIndex,
+                                    setIndex,
+                                    'reps',
+                                    e.target.value
+                                  )
+                                }
+                                className={`flex-1 min-w-0 px-3 py-3 sm:py-2 rounded-lg border ${theme.input} text-base sm:text-sm`}
+                              />
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 ))}
 
-                <div className='flex gap-2'>
+                <div className='flex flex-col sm:flex-row gap-2'>
                   <button
                     onClick={saveWorkout}
-                    className='flex-1 py-4 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 flex items-center justify-center gap-2'
+                    className='flex-1 py-3 sm:py-4 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
                   >
                     <Save className='w-5 h-5' />
                     Guardar Entrenamiento
                   </button>
                   <button
                     onClick={() => setSelectedRoutine(null)}
-                    className='flex-1 py-4 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 flex items-center justify-center gap-2'
+                    className='flex-1 py-3 sm:py-4 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 active:bg-red-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
                   >
                     <X className='w-5 h-5' />
                     Cancelar
@@ -676,53 +707,61 @@ export default function GymTracker() {
         )}
 
         {activeTab === 'progress' && (
-          <div className='space-y-6'>
+          <div className='space-y-4 sm:space-y-6'>
             {workouts.length === 0 ? (
               <div
-                className={`p-8 rounded-lg ${theme.card} border ${theme.border} text-center`}
+                className={`p-6 sm:p-8 rounded-lg ${theme.card} border ${theme.border} text-center`}
               >
-                <TrendingUp className='w-16 h-16 mx-auto mb-4 opacity-50' />
-                <p className={`text-lg ${theme.textSecondary}`}>
+                <TrendingUp className='w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 opacity-50' />
+                <p className={`text-base sm:text-lg ${theme.textSecondary}`}>
                   Aún no hay entrenamientos registrados
                 </p>
               </div>
             ) : (
               <>
-                <div className='grid grid-cols-3 gap-4'>
+                <div className='grid grid-cols-3 gap-2 sm:gap-4'>
                   <div
-                    className={`p-6 rounded-lg ${theme.card} border ${theme.border} text-center`}
+                    className={`p-3 sm:p-6 rounded-lg ${theme.card} border ${theme.border} text-center`}
                   >
-                    <p className='text-3xl font-bold mb-1'>{workouts.length}</p>
-                    <p className={theme.textSecondary}>Entrenamientos</p>
+                    <p className='text-xl sm:text-3xl font-bold mb-1'>
+                      {workouts.length}
+                    </p>
+                    <p className={`${theme.textSecondary} text-xs sm:text-sm`}>
+                      Entrenamientos
+                    </p>
                   </div>
                   <div
-                    className={`p-6 rounded-lg ${theme.card} border ${theme.border} text-center`}
+                    className={`p-3 sm:p-6 rounded-lg ${theme.card} border ${theme.border} text-center`}
                   >
-                    <p className='text-3xl font-bold mb-1'>
+                    <p className='text-xl sm:text-3xl font-bold mb-1'>
                       {getAllExercises().length}
                     </p>
-                    <p className={theme.textSecondary}>Ejercicios</p>
+                    <p className={`${theme.textSecondary} text-xs sm:text-sm`}>
+                      Ejercicios
+                    </p>
                   </div>
                   <div
-                    className={`p-6 rounded-lg ${theme.card} border ${theme.border} text-center`}
+                    className={`p-3 sm:p-6 rounded-lg ${theme.card} border ${theme.border} text-center`}
                   >
-                    <p className='text-3xl font-bold mb-1'>
+                    <p className='text-xl sm:text-3xl font-bold mb-1'>
                       {new Set(workouts.map((w) => w.date)).size}
                     </p>
-                    <p className={theme.textSecondary}>Días activos</p>
+                    <p className={`${theme.textSecondary} text-xs sm:text-sm`}>
+                      Días activos
+                    </p>
                   </div>
                 </div>
 
                 <div
-                  className={`p-6 rounded-lg ${theme.card} border ${theme.border}`}
+                  className={`p-4 sm:p-6 rounded-lg ${theme.card} border ${theme.border}`}
                 >
-                  <h3 className='text-xl font-bold mb-4'>
+                  <h3 className='text-lg sm:text-xl font-bold mb-3 sm:mb-4'>
                     Seleccionar Ejercicio
                   </h3>
                   <select
                     value={selectedExercise || ''}
                     onChange={(e) => setSelectedExercise(e.target.value)}
-                    className={`w-full px-4 py-2 rounded-lg border ${theme.input}`}
+                    className={`w-full px-4 py-3 sm:py-2 rounded-lg border ${theme.input} text-base sm:text-sm`}
                   >
                     <option value=''>-- Selecciona un ejercicio --</option>
                     {getAllExercises().map((ex) => (
@@ -735,19 +774,19 @@ export default function GymTracker() {
 
                 {selectedExercise && (
                   <div
-                    className={`p-6 rounded-lg ${theme.card} border ${theme.border}`}
+                    className={`p-4 sm:p-6 rounded-lg ${theme.card} border ${theme.border}`}
                   >
-                    <h3 className='text-xl font-bold mb-4'>
+                    <h3 className='text-lg sm:text-xl font-bold mb-3 sm:mb-4'>
                       Progreso: {selectedExercise}
                     </h3>
 
-                    <div className='mb-6'>
+                    <div className='mb-4 sm:mb-6'>
                       <h4
-                        className={`text-sm font-medium mb-2 ${theme.textSecondary}`}
+                        className={`text-xs sm:text-sm font-medium mb-2 ${theme.textSecondary}`}
                       >
                         Peso Máximo (kg)
                       </h4>
-                      <ResponsiveContainer width='100%' height={200}>
+                      <ResponsiveContainer width='100%' height={180}>
                         <LineChart data={getExerciseData(selectedExercise)}>
                           <CartesianGrid
                             strokeDasharray='3 3'
@@ -756,8 +795,15 @@ export default function GymTracker() {
                           <XAxis
                             dataKey='date'
                             stroke={darkMode ? '#9ca3af' : '#6b7280'}
+                            tick={{ fontSize: 10 }}
+                            angle={-45}
+                            textAnchor='end'
+                            height={60}
                           />
-                          <YAxis stroke={darkMode ? '#9ca3af' : '#6b7280'} />
+                          <YAxis
+                            stroke={darkMode ? '#9ca3af' : '#6b7280'}
+                            tick={{ fontSize: 10 }}
+                          />
                           <Tooltip
                             contentStyle={{
                               backgroundColor: darkMode ? '#1f2937' : '#ffffff',
@@ -766,6 +812,7 @@ export default function GymTracker() {
                               }`,
                               borderRadius: '8px',
                               color: darkMode ? '#f3f4f6' : '#111827',
+                              fontSize: '12px',
                             }}
                           />
                           <Line
@@ -780,11 +827,11 @@ export default function GymTracker() {
 
                     <div>
                       <h4
-                        className={`text-sm font-medium mb-2 ${theme.textSecondary}`}
+                        className={`text-xs sm:text-sm font-medium mb-2 ${theme.textSecondary}`}
                       >
                         Volumen Total (kg)
                       </h4>
-                      <ResponsiveContainer width='100%' height={200}>
+                      <ResponsiveContainer width='100%' height={180}>
                         <LineChart data={getExerciseData(selectedExercise)}>
                           <CartesianGrid
                             strokeDasharray='3 3'
@@ -793,8 +840,15 @@ export default function GymTracker() {
                           <XAxis
                             dataKey='date'
                             stroke={darkMode ? '#9ca3af' : '#6b7280'}
+                            tick={{ fontSize: 10 }}
+                            angle={-45}
+                            textAnchor='end'
+                            height={60}
                           />
-                          <YAxis stroke={darkMode ? '#9ca3af' : '#6b7280'} />
+                          <YAxis
+                            stroke={darkMode ? '#9ca3af' : '#6b7280'}
+                            tick={{ fontSize: 10 }}
+                          />
                           <Tooltip
                             contentStyle={{
                               backgroundColor: darkMode ? '#1f2937' : '#ffffff',
@@ -803,6 +857,7 @@ export default function GymTracker() {
                               }`,
                               borderRadius: '8px',
                               color: darkMode ? '#f3f4f6' : '#111827',
+                              fontSize: '12px',
                             }}
                           />
                           <Line
@@ -818,10 +873,12 @@ export default function GymTracker() {
                 )}
 
                 <div
-                  className={`p-6 rounded-lg ${theme.card} border ${theme.border}`}
+                  className={`p-4 sm:p-6 rounded-lg ${theme.card} border ${theme.border}`}
                 >
-                  <h3 className='text-xl font-bold mb-4'>Historial Reciente</h3>
-                  <div className='space-y-3'>
+                  <h3 className='text-lg sm:text-xl font-bold mb-3 sm:mb-4'>
+                    Historial Reciente
+                  </h3>
+                  <div className='space-y-2 sm:space-y-3'>
                     {workouts
                       .slice()
                       .reverse()
@@ -829,19 +886,23 @@ export default function GymTracker() {
                       .map((workout) => (
                         <div
                           key={workout.id}
-                          className={`p-4 rounded-lg border ${theme.border}`}
+                          className={`p-3 sm:p-4 rounded-lg border ${theme.border}`}
                         >
-                          <div className='flex justify-between mb-2'>
-                            <span className='font-medium'>
+                          <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 mb-1 sm:mb-2'>
+                            <span className='font-medium text-sm sm:text-base truncate'>
                               {workout.routineName}
                             </span>
-                            <span className={theme.textSecondary}>
+                            <span
+                              className={`${theme.textSecondary} text-xs sm:text-sm flex-shrink-0`}
+                            >
                               {new Date(workout.date).toLocaleDateString(
                                 'es-ES'
                               )}
                             </span>
                           </div>
-                          <p className={`text-sm ${theme.textSecondary}`}>
+                          <p
+                            className={`text-xs sm:text-sm ${theme.textSecondary}`}
+                          >
                             {workout.exercises.length} ejercicios completados
                           </p>
                         </div>

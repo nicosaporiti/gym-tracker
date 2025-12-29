@@ -15,4 +15,33 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+/* Mejoras para móviles */
+@media (max-width: 640px) {
+  input[type='text'],
+  input[type='number'],
+  input[type='date'],
+  select {
+    font-size: 16px !important; /* Previene zoom en iOS */
+  }
+  
+  button {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Mejora el scroll en móviles */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Asegura que los elementos sean táctiles */
+button,
+a,
+input,
+select {
+  touch-action: manipulation;
 }

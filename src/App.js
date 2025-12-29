@@ -243,7 +243,15 @@ export default function GymTracker() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut({ scope: 'local' });
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (error) {
+      console.error('Error en signOut:', error);
+    }
+    // Forzar limpieza local aunque falle la petición
+    setUser(null);
+    setRoutines([]);
+    setWorkouts([]);
   };
 
   const exportToJSON = () => {

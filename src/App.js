@@ -33,6 +33,7 @@ export default function GymTracker() {
   const [selectedRoutine, setSelectedRoutine] = useState(null);
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedWorkoutDetail, setSelectedWorkoutDetail] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -81,7 +82,7 @@ export default function GymTracker() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `gym-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `gym-backup-${getLocalDateString()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -103,7 +104,7 @@ export default function GymTracker() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `gym-workouts-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `gym-workouts-${getLocalDateString()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -203,7 +204,7 @@ export default function GymTracker() {
   const startWorkout = (routine) => {
     setSelectedRoutine({
       ...routine,
-      date: new Date().toISOString().split('T')[0],
+      date: getLocalDateString(),
       exercises: routine.exercises.map((ex) => ({
         ...ex,
         sets: Array(ex.sets).fill({ weight: 0, reps: 0 }),
@@ -222,11 +223,22 @@ export default function GymTracker() {
   };
 
   const saveWorkout = () => {
+    // Asegurar que la fecha esté en formato YYYY-MM-DD (normalizar)
+    let workoutDate = selectedRoutine.date;
+    if (workoutDate) {
+      // Si la fecha viene del input type="date", ya está en formato correcto
+      // Pero si viene de alguna otra fuente, normalizarla
+      const dateObj = parseLocalDate(workoutDate);
+      workoutDate = getLocalDateString(dateObj);
+    } else {
+      workoutDate = getLocalDateString();
+    }
+
     const workout = {
       id: Date.now(),
       routineId: selectedRoutine.id,
       routineName: selectedRoutine.name,
-      date: selectedRoutine.date,
+      date: workoutDate,
       exercises: selectedRoutine.exercises.map((ex) => ({
         name: ex.name,
         sets: ex.sets,
@@ -241,7 +253,7 @@ export default function GymTracker() {
   const getExerciseData = (exerciseName) => {
     const exerciseWorkouts = workouts
       .filter((w) => w.exercises.some((e) => e.name === exerciseName))
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
+      .sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
 
     return exerciseWorkouts.map((w) => {
       const exercise = w.exercises.find((e) => e.name === exerciseName);
@@ -251,8 +263,11 @@ export default function GymTracker() {
         0
       );
 
+      // Usar parseLocalDate para evitar problemas de zona horaria
+      const workoutDate = parseLocalDate(w.date);
+
       return {
-        date: new Date(w.date).toLocaleDateString('es-ES', {
+        date: workoutDate.toLocaleDateString('es-ES', {
           month: 'short',
           day: 'numeric',
         }),
@@ -268,6 +283,53 @@ export default function GymTracker() {
       w.exercises.forEach((e) => exercises.add(e.name));
     });
     return Array.from(exercises);
+  };
+
+  // Función helper para obtener la fecha local en formato YYYY-MM-DD
+  const getLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Función helper para parsear fecha YYYY-MM-DD como fecha local (no UTC)
+  const parseLocalDate = (dateString) => {
+    if (!dateString) return new Date();
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  // Calcular volumen total de un entrenamiento
+  const getWorkoutTotalVolume = (workout) => {
+    return workout.exercises.reduce((total, exercise) => {
+      const exerciseVolume = exercise.sets.reduce(
+        (sum, set) => sum + set.weight * set.reps,
+        0
+      );
+      return total + exerciseVolume;
+    }, 0);
+  };
+
+  // Obtener resumen por ejercicio de un entrenamiento
+  const getWorkoutExerciseSummary = (workout) => {
+    return workout.exercises.map((exercise) => {
+      const totalSets = exercise.sets.length;
+      const totalVolume = exercise.sets.reduce(
+        (sum, set) => sum + set.weight * set.reps,
+        0
+      );
+      const totalReps = exercise.sets.reduce((sum, set) => sum + set.reps, 0);
+      const maxWeight = Math.max(...exercise.sets.map((s) => s.weight));
+
+      return {
+        name: exercise.name,
+        totalSets,
+        totalVolume,
+        totalReps,
+        maxWeight,
+      };
+    });
   };
 
   const theme = {
@@ -883,30 +945,87 @@ export default function GymTracker() {
                       .slice()
                       .reverse()
                       .slice(0, 10)
-                      .map((workout) => (
-                        <div
-                          key={workout.id}
-                          className={`p-3 sm:p-4 rounded-lg border ${theme.border}`}
-                        >
-                          <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 mb-1 sm:mb-2'>
-                            <span className='font-medium text-sm sm:text-base truncate'>
-                              {workout.routineName}
-                            </span>
-                            <span
-                              className={`${theme.textSecondary} text-xs sm:text-sm flex-shrink-0`}
+                      .map((workout) => {
+                        const totalVolume = getWorkoutTotalVolume(workout);
+                        const isExpanded = selectedWorkoutDetail === workout.id;
+
+                        return (
+                          <div key={workout.id}>
+                            <div
+                              onClick={() =>
+                                setSelectedWorkoutDetail(
+                                  isExpanded ? null : workout.id
+                                )
+                              }
+                              className={`p-3 sm:p-4 rounded-lg border ${
+                                theme.border
+                              } cursor-pointer transition-colors ${
+                                theme.hover
+                              } ${isExpanded ? 'ring-2 ring-blue-500' : ''}`}
                             >
-                              {new Date(workout.date).toLocaleDateString(
-                                'es-ES'
-                              )}
-                            </span>
+                              <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 mb-1 sm:mb-2'>
+                                <span className='font-medium text-sm sm:text-base truncate'>
+                                  {workout.routineName}
+                                </span>
+                                <span
+                                  className={`${theme.textSecondary} text-xs sm:text-sm flex-shrink-0`}
+                                >
+                                  {parseLocalDate(
+                                    workout.date
+                                  ).toLocaleDateString('es-ES')}
+                                </span>
+                              </div>
+                              <div className='flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2'>
+                                <p
+                                  className={`text-xs sm:text-sm ${theme.textSecondary}`}
+                                >
+                                  {workout.exercises.length} ejercicios
+                                </p>
+                                <span className='text-xs sm:text-sm font-semibold text-blue-500'>
+                                  Volumen total: {totalVolume.toFixed(1)} kg
+                                </span>
+                              </div>
+                            </div>
+
+                            {isExpanded && (
+                              <div
+                                className={`mt-2 p-3 sm:p-4 rounded-lg border ${theme.border} ${theme.card} space-y-2`}
+                              >
+                                <h4 className='font-semibold text-sm sm:text-base mb-2'>
+                                  Resumen por Ejercicio
+                                </h4>
+                                {getWorkoutExerciseSummary(workout).map(
+                                  (exercise, idx) => (
+                                    <div
+                                      key={idx}
+                                      className={`p-2 sm:p-3 rounded border ${theme.border} flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2`}
+                                    >
+                                      <span className='font-medium text-sm sm:text-base'>
+                                        {exercise.name}
+                                      </span>
+                                      <div className='flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm'>
+                                        <span className={theme.textSecondary}>
+                                          Series: {exercise.totalSets}
+                                        </span>
+                                        <span className={theme.textSecondary}>
+                                          Reps: {exercise.totalReps}
+                                        </span>
+                                        <span className={theme.textSecondary}>
+                                          Peso máx: {exercise.maxWeight} kg
+                                        </span>
+                                        <span className='font-semibold text-blue-500'>
+                                          Total:{' '}
+                                          {exercise.totalVolume.toFixed(1)} kg
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )}
                           </div>
-                          <p
-                            className={`text-xs sm:text-sm ${theme.textSecondary}`}
-                          >
-                            {workout.exercises.length} ejercicios completados
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 </div>
               </>

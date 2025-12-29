@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Trash2,
@@ -13,6 +13,10 @@ import {
   Download,
   Upload,
   Settings,
+  LogOut,
+  Mail,
+  Lock,
+  User,
 } from 'lucide-react';
 import {
   LineChart,
@@ -23,8 +27,155 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { supabase } from './supabaseClient';
 
+// Componente de Autenticación
+function AuthForm({ darkMode, onAuthSuccess }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null);
+
+  const theme = {
+    bg: darkMode ? 'bg-gray-900' : 'bg-gray-50',
+    card: darkMode ? 'bg-gray-800' : 'bg-white',
+    text: darkMode ? 'text-gray-100' : 'text-gray-900',
+    textSecondary: darkMode ? 'text-gray-400' : 'text-gray-600',
+    border: darkMode ? 'border-gray-700' : 'border-gray-200',
+    input: darkMode
+      ? 'bg-gray-700 text-gray-100 border-gray-600'
+      : 'bg-white text-gray-900 border-gray-300',
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+        setMessage('Revisa tu email para confirmar tu cuenta');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={`min-h-screen ${theme.bg} ${theme.text} flex items-center justify-center p-4`}>
+      <div className={`w-full max-w-md ${theme.card} rounded-xl p-6 sm:p-8 border ${theme.border}`}>
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <Dumbbell className="w-8 h-8 text-blue-500" />
+          <h1 className="text-2xl font-bold">Gym Tracker</h1>
+        </div>
+
+        <h2 className="text-xl font-semibold text-center mb-6">
+          {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${theme.textSecondary}`}>
+              Email
+            </label>
+            <div className="relative">
+              <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${theme.textSecondary}`} />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="tu@email.com"
+                className={`w-full pl-10 pr-4 py-3 rounded-lg border ${theme.input}`}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${theme.textSecondary}`}>
+              Contraseña
+            </label>
+            <div className="relative">
+              <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${theme.textSecondary}`} />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                minLength={6}
+                className={`w-full pl-10 pr-4 py-3 rounded-lg border ${theme.input}`}
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-3 rounded-lg bg-red-500/20 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          {message && (
+            <div className="p-3 rounded-lg bg-green-500/20 text-green-400 text-sm">
+              {message}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <User className="w-5 h-5" />
+                {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError(null);
+              setMessage(null);
+            }}
+            className={`text-sm ${theme.textSecondary} hover:text-blue-500`}
+          >
+            {isLogin
+              ? '¿No tienes cuenta? Regístrate'
+              : '¿Ya tienes cuenta? Inicia sesión'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Componente Principal
 export default function GymTracker() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState('routines');
   const [routines, setRoutines] = useState([]);
@@ -34,39 +185,65 @@ export default function GymTracker() {
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedWorkoutDetail, setSelectedWorkoutDetail] = useState(null);
+  const [dataLoading, setDataLoading] = useState(false);
 
+  // Verificar sesión al cargar
   useEffect(() => {
-    loadData();
+    const savedDarkMode = localStorage.getItem('gym-darkmode');
+    if (savedDarkMode) setDarkMode(savedDarkMode === 'true');
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const loadData = () => {
-    try {
-      const savedRoutines = localStorage.getItem('gym-routines');
-      const savedWorkouts = localStorage.getItem('gym-workouts');
-      const savedDarkMode = localStorage.getItem('gym-darkmode');
+  const loadData = useCallback(async () => {
+    if (!user) return;
+    setDataLoading(true);
 
-      if (savedRoutines) setRoutines(JSON.parse(savedRoutines));
-      if (savedWorkouts) setWorkouts(JSON.parse(savedWorkouts));
-      if (savedDarkMode) setDarkMode(savedDarkMode === 'true');
+    try {
+      const [routinesRes, workoutsRes] = await Promise.all([
+        supabase.from('routines').select('*').order('created_at', { ascending: false }),
+        supabase.from('workouts').select('*').order('created_at', { ascending: false }),
+      ]);
+
+      if (routinesRes.error) throw routinesRes.error;
+      if (workoutsRes.error) throw workoutsRes.error;
+
+      setRoutines(routinesRes.data || []);
+      setWorkouts(workoutsRes.data || []);
     } catch (error) {
       console.error('Error cargando datos:', error);
+    } finally {
+      setDataLoading(false);
     }
-  };
+  }, [user]);
 
-  const saveRoutines = (newRoutines) => {
-    setRoutines(newRoutines);
-    localStorage.setItem('gym-routines', JSON.stringify(newRoutines));
-  };
-
-  const saveWorkouts = (newWorkouts) => {
-    setWorkouts(newWorkouts);
-    localStorage.setItem('gym-workouts', JSON.stringify(newWorkouts));
-  };
+  // Cargar datos cuando hay usuario
+  useEffect(() => {
+    if (user) {
+      loadData();
+    } else {
+      setRoutines([]);
+      setWorkouts([]);
+    }
+  }, [user, loadData]);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
     localStorage.setItem('gym-darkmode', newMode.toString());
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
   const exportToJSON = () => {
@@ -93,7 +270,7 @@ export default function GymTracker() {
     workouts.forEach((workout) => {
       workout.exercises.forEach((exercise) => {
         exercise.sets.forEach((set, index) => {
-          csv += `${workout.date},${workout.routineName},${exercise.name},${
+          csv += `${workout.date},${workout.routine_name},${exercise.name},${
             index + 1
           },${set.weight},${set.reps}\n`;
         });
@@ -109,23 +286,37 @@ export default function GymTracker() {
     URL.revokeObjectURL(url);
   };
 
-  const importFromJSON = (event) => {
+  const importFromJSON = async (event) => {
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = JSON.parse(e.target.result);
 
         if (data.routines && Array.isArray(data.routines)) {
-          saveRoutines(data.routines);
+          for (const routine of data.routines) {
+            await supabase.from('routines').insert({
+              user_id: user.id,
+              name: routine.name,
+              exercises: routine.exercises,
+            });
+          }
         }
 
         if (data.workouts && Array.isArray(data.workouts)) {
-          saveWorkouts(data.workouts);
+          for (const workout of data.workouts) {
+            await supabase.from('workouts').insert({
+              user_id: user.id,
+              routine_name: workout.routineName || workout.routine_name,
+              date: workout.date,
+              exercises: workout.exercises,
+            });
+          }
         }
 
+        await loadData();
         alert('Datos importados correctamente');
         setShowSettings(false);
       } catch (error) {
@@ -137,24 +328,32 @@ export default function GymTracker() {
     event.target.value = '';
   };
 
-  const clearAllData = () => {
+  const clearAllData = async () => {
+    if (!user) return;
     if (
       window.confirm(
         '¿Estás seguro de que quieres borrar TODOS los datos? Esta acción no se puede deshacer.'
       )
     ) {
-      localStorage.removeItem('gym-routines');
-      localStorage.removeItem('gym-workouts');
-      setRoutines([]);
-      setWorkouts([]);
-      alert('Todos los datos han sido borrados');
-      setShowSettings(false);
+      try {
+        await Promise.all([
+          supabase.from('routines').delete().eq('user_id', user.id),
+          supabase.from('workouts').delete().eq('user_id', user.id),
+        ]);
+        setRoutines([]);
+        setWorkouts([]);
+        alert('Todos los datos han sido borrados');
+        setShowSettings(false);
+      } catch (error) {
+        console.error('Error borrando datos:', error);
+        alert('Error al borrar los datos');
+      }
     }
   };
 
   const createRoutine = () => {
     setEditingRoutine({
-      id: Date.now(),
+      id: null,
       name: '',
       exercises: [],
     });
@@ -178,26 +377,48 @@ export default function GymTracker() {
     setEditingRoutine({ ...editingRoutine, exercises: newExercises });
   };
 
-  const saveRoutine = () => {
-    if (!editingRoutine.name || editingRoutine.exercises.length === 0) return;
+  const saveRoutine = async () => {
+    if (!editingRoutine.name || editingRoutine.exercises.length === 0 || !user) return;
 
-    const existingIndex = routines.findIndex((r) => r.id === editingRoutine.id);
-    let newRoutines;
+    try {
+      if (editingRoutine.id) {
+        // Update existing
+        const { error } = await supabase
+          .from('routines')
+          .update({
+            name: editingRoutine.name,
+            exercises: editingRoutine.exercises,
+          })
+          .eq('id', editingRoutine.id);
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { error } = await supabase.from('routines').insert({
+          user_id: user.id,
+          name: editingRoutine.name,
+          exercises: editingRoutine.exercises,
+        });
+        if (error) throw error;
+      }
 
-    if (existingIndex >= 0) {
-      newRoutines = [...routines];
-      newRoutines[existingIndex] = editingRoutine;
-    } else {
-      newRoutines = [...routines, editingRoutine];
+      await loadData();
+      setEditingRoutine(null);
+    } catch (error) {
+      console.error('Error guardando rutina:', error);
+      alert('Error al guardar la rutina');
     }
-
-    saveRoutines(newRoutines);
-    setEditingRoutine(null);
   };
 
-  const deleteRoutine = (id) => {
+  const deleteRoutine = async (id) => {
     if (window.confirm('¿Eliminar esta rutina?')) {
-      saveRoutines(routines.filter((r) => r.id !== id));
+      try {
+        const { error } = await supabase.from('routines').delete().eq('id', id);
+        if (error) throw error;
+        setRoutines(routines.filter((r) => r.id !== id));
+      } catch (error) {
+        console.error('Error eliminando rutina:', error);
+        alert('Error al eliminar la rutina');
+      }
     }
   };
 
@@ -222,32 +443,38 @@ export default function GymTracker() {
     setSelectedRoutine(newRoutine);
   };
 
-  const saveWorkout = () => {
-    // Asegurar que la fecha esté en formato YYYY-MM-DD (normalizar)
+  const saveWorkout = async () => {
+    if (!user) return;
+
     let workoutDate = selectedRoutine.date;
     if (workoutDate) {
-      // Si la fecha viene del input type="date", ya está en formato correcto
-      // Pero si viene de alguna otra fuente, normalizarla
       const dateObj = parseLocalDate(workoutDate);
       workoutDate = getLocalDateString(dateObj);
     } else {
       workoutDate = getLocalDateString();
     }
 
-    const workout = {
-      id: Date.now(),
-      routineId: selectedRoutine.id,
-      routineName: selectedRoutine.name,
-      date: workoutDate,
-      exercises: selectedRoutine.exercises.map((ex) => ({
-        name: ex.name,
-        sets: ex.sets,
-      })),
-    };
+    try {
+      const { error } = await supabase.from('workouts').insert({
+        user_id: user.id,
+        routine_id: selectedRoutine.id,
+        routine_name: selectedRoutine.name,
+        date: workoutDate,
+        exercises: selectedRoutine.exercises.map((ex) => ({
+          name: ex.name,
+          sets: ex.sets,
+        })),
+      });
 
-    saveWorkouts([...workouts, workout]);
-    setSelectedRoutine(null);
-    setActiveTab('progress');
+      if (error) throw error;
+
+      await loadData();
+      setSelectedRoutine(null);
+      setActiveTab('progress');
+    } catch (error) {
+      console.error('Error guardando entrenamiento:', error);
+      alert('Error al guardar el entrenamiento');
+    }
   };
 
   const getExerciseData = (exerciseName) => {
@@ -263,7 +490,6 @@ export default function GymTracker() {
         0
       );
 
-      // Usar parseLocalDate para evitar problemas de zona horaria
       const workoutDate = parseLocalDate(w.date);
 
       return {
@@ -285,7 +511,6 @@ export default function GymTracker() {
     return Array.from(exercises);
   };
 
-  // Función helper para obtener la fecha local en formato YYYY-MM-DD
   const getLocalDateString = (date = new Date()) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -293,14 +518,12 @@ export default function GymTracker() {
     return `${year}-${month}-${day}`;
   };
 
-  // Función helper para parsear fecha YYYY-MM-DD como fecha local (no UTC)
   const parseLocalDate = (dateString) => {
     if (!dateString) return new Date();
     const [year, month, day] = dateString.split('-').map(Number);
     return new Date(year, month - 1, day);
   };
 
-  // Calcular volumen total de un entrenamiento
   const getWorkoutTotalVolume = (workout) => {
     return workout.exercises.reduce((total, exercise) => {
       const exerciseVolume = exercise.sets.reduce(
@@ -311,7 +534,6 @@ export default function GymTracker() {
     }, 0);
   };
 
-  // Obtener resumen por ejercicio de un entrenamiento
   const getWorkoutExerciseSummary = (workout) => {
     return workout.exercises.map((exercise) => {
       const totalSets = exercise.sets.length;
@@ -344,6 +566,20 @@ export default function GymTracker() {
     hover: darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
   };
 
+  // Loading auth state
+  if (authLoading) {
+    return (
+      <div className={`min-h-screen ${theme.bg} flex items-center justify-center`}>
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // No user - show auth form
+  if (!user) {
+    return <AuthForm darkMode={darkMode} />;
+  }
+
   return (
     <div
       className={`min-h-screen ${theme.bg} ${theme.text} transition-colors duration-200`}
@@ -375,6 +611,13 @@ export default function GymTracker() {
             >
               <Settings className='w-5 h-5' />
             </button>
+            <button
+              onClick={handleLogout}
+              className={`p-2 rounded-lg ${theme.card} ${theme.hover} touch-manipulation text-red-500`}
+              aria-label='Logout'
+            >
+              <LogOut className='w-5 h-5' />
+            </button>
           </div>
         </div>
 
@@ -392,6 +635,11 @@ export default function GymTracker() {
                 >
                   <X className='w-5 h-5' />
                 </button>
+              </div>
+
+              <div className={`p-3 rounded-lg border ${theme.border} mb-4`}>
+                <p className={`text-sm ${theme.textSecondary}`}>Sesión iniciada como:</p>
+                <p className="font-medium truncate">{user.email}</p>
               </div>
 
               <div className='space-y-2 sm:space-y-3'>
@@ -472,7 +720,13 @@ export default function GymTracker() {
           ))}
         </div>
 
-        {activeTab === 'routines' && (
+        {dataLoading && (
+          <div className="flex justify-center py-8">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!dataLoading && activeTab === 'routines' && (
           <div className='space-y-3 sm:space-y-4'>
             {!editingRoutine && (
               <button
@@ -643,7 +897,7 @@ export default function GymTracker() {
           </div>
         )}
 
-        {activeTab === 'workout' && (
+        {!dataLoading && activeTab === 'workout' && (
           <div className='space-y-3 sm:space-y-4'>
             {!selectedRoutine ? (
               <div
@@ -768,7 +1022,7 @@ export default function GymTracker() {
           </div>
         )}
 
-        {activeTab === 'progress' && (
+        {!dataLoading && activeTab === 'progress' && (
           <div className='space-y-4 sm:space-y-6'>
             {workouts.length === 0 ? (
               <div
@@ -942,8 +1196,6 @@ export default function GymTracker() {
                   </h3>
                   <div className='space-y-2 sm:space-y-3'>
                     {workouts
-                      .slice()
-                      .reverse()
                       .slice(0, 10)
                       .map((workout) => {
                         const totalVolume = getWorkoutTotalVolume(workout);
@@ -965,7 +1217,7 @@ export default function GymTracker() {
                             >
                               <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 mb-1 sm:mb-2'>
                                 <span className='font-medium text-sm sm:text-base truncate'>
-                                  {workout.routineName}
+                                  {workout.routine_name}
                                 </span>
                                 <span
                                   className={`${theme.textSecondary} text-xs sm:text-sm flex-shrink-0`}

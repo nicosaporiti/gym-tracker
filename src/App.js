@@ -17,6 +17,8 @@ import {
   Mail,
   Lock,
   User,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   LineChart,
@@ -186,6 +188,8 @@ export default function GymTracker() {
   const [showSettings, setShowSettings] = useState(false);
   const [selectedWorkoutDetail, setSelectedWorkoutDetail] = useState(null);
   const [dataLoading, setDataLoading] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(null);
 
   // Verificar sesión al cargar
   useEffect(() => {
@@ -445,11 +449,12 @@ export default function GymTracker() {
     }
   };
 
-  const editWorkout = (workout, e) => {
+  const editWorkout = (workout, e, fromCalendar = false) => {
     e.stopPropagation();
     setSelectedRoutine({
       ...workout,
       isEditing: true,
+      fromCalendar,
       name: workout.routine_name,
       exercises: workout.exercises.map((ex) => ({
         ...ex,
@@ -603,6 +608,75 @@ export default function GymTracker() {
         maxWeight,
       };
     });
+  };
+
+  // Calendar helper functions
+  const getCalendarDays = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+
+    // Get the day of week for the first day (0 = Sunday, adjust for Monday start)
+    let startDayOfWeek = firstDay.getDay();
+    startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // Convert to Monday = 0
+
+    const days = [];
+
+    // Add days from previous month
+    const prevMonth = new Date(year, month, 0);
+    const prevMonthDays = prevMonth.getDate();
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+      days.push({
+        date: new Date(year, month - 1, prevMonthDays - i),
+        isCurrentMonth: false,
+      });
+    }
+
+    // Add days of current month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push({
+        date: new Date(year, month, i),
+        isCurrentMonth: true,
+      });
+    }
+
+    // Add days from next month to complete the grid (6 rows x 7 days = 42)
+    const remainingDays = 42 - days.length;
+    for (let i = 1; i <= remainingDays; i++) {
+      days.push({
+        date: new Date(year, month + 1, i),
+        isCurrentMonth: false,
+      });
+    }
+
+    return days;
+  };
+
+  const getWorkoutsForDate = (date) => {
+    const dateStr = getLocalDateString(date);
+    return workouts.filter((w) => w.date === dateStr);
+  };
+
+  const hasWorkoutOnDate = (date) => getWorkoutsForDate(date).length > 0;
+
+  const isToday = (date) => {
+    const today = new Date();
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
+
+  const navigateMonth = (direction) => {
+    setCalendarMonth((prev) => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() + direction);
+      return newDate;
+    });
+    setSelectedCalendarDate(null);
   };
 
   const theme = {
@@ -1062,7 +1136,11 @@ export default function GymTracker() {
                     {selectedRoutine.isEditing ? 'Actualizar Entrenamiento' : 'Guardar Entrenamiento'}
                   </button>
                   <button
-                    onClick={() => setSelectedRoutine(null)}
+                    onClick={() => {
+                      const returnToProgress = selectedRoutine.fromCalendar;
+                      setSelectedRoutine(null);
+                      if (returnToProgress) setActiveTab('progress');
+                    }}
                     className='flex-1 py-3 sm:py-4 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 active:bg-red-800 flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base'
                   >
                     <X className='w-5 h-5' />
@@ -1118,6 +1196,149 @@ export default function GymTracker() {
                       Días activos
                     </p>
                   </div>
+                </div>
+
+                {/* Calendar Component */}
+                <div
+                  className={`p-3 sm:p-4 rounded-lg ${theme.card} border ${theme.border}`}
+                >
+                  <div className='flex items-center justify-between mb-2'>
+                    <button
+                      onClick={() => navigateMonth(-1)}
+                      className={`p-1 rounded ${theme.hover} touch-manipulation`}
+                      aria-label='Mes anterior'
+                    >
+                      <ChevronLeft className='w-4 h-4' />
+                    </button>
+                    <h3 className='text-sm font-semibold capitalize'>
+                      {calendarMonth.toLocaleDateString('es-ES', {
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </h3>
+                    <button
+                      onClick={() => navigateMonth(1)}
+                      className={`p-1 rounded ${theme.hover} touch-manipulation`}
+                      aria-label='Mes siguiente'
+                    >
+                      <ChevronRight className='w-4 h-4' />
+                    </button>
+                  </div>
+
+                  {/* Days of week header */}
+                  <div className='grid grid-cols-7 gap-0.5 mb-1'>
+                    {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day) => (
+                      <div
+                        key={day}
+                        className={`text-center text-[10px] font-medium ${theme.textSecondary}`}
+                      >
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Calendar grid */}
+                  <div className='grid grid-cols-7 gap-0.5'>
+                    {getCalendarDays(calendarMonth).map((dayObj, index) => {
+                      const hasWorkout = hasWorkoutOnDate(dayObj.date);
+                      const isTodayDate = isToday(dayObj.date);
+                      const isSelected =
+                        selectedCalendarDate &&
+                        dayObj.date.toDateString() ===
+                          selectedCalendarDate.toDateString();
+
+                      return (
+                        <button
+                          key={index}
+                          onClick={() =>
+                            hasWorkout && setSelectedCalendarDate(dayObj.date)
+                          }
+                          disabled={!hasWorkout}
+                          className={`
+                            w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-[10px] sm:text-xs
+                            ${!dayObj.isCurrentMonth ? 'opacity-20' : ''}
+                            ${hasWorkout ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700' : ''}
+                            ${isTodayDate && !hasWorkout ? 'ring-1 ring-blue-400' : ''}
+                            ${isSelected ? 'ring-2 ring-blue-300' : ''}
+                            ${!hasWorkout ? 'cursor-default' : ''}
+                          `}
+                        >
+                          {dayObj.date.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Selected day details */}
+                  {selectedCalendarDate && (
+                    <div className={`mt-3 pt-3 border-t ${theme.border}`}>
+                      <div className='flex items-center justify-between mb-2'>
+                        <span className='text-xs font-medium'>
+                          {selectedCalendarDate.toLocaleDateString('es-ES', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                          })}
+                        </span>
+                        <button
+                          onClick={() => setSelectedCalendarDate(null)}
+                          className={`p-0.5 rounded ${theme.hover}`}
+                          aria-label='Cerrar'
+                        >
+                          <X className='w-3 h-3' />
+                        </button>
+                      </div>
+                      <div className='space-y-2'>
+                        {getWorkoutsForDate(selectedCalendarDate).map(
+                          (workout) => (
+                            <div
+                              key={workout.id}
+                              className={`p-2 rounded border ${theme.border} text-xs`}
+                            >
+                              <div className='flex items-center justify-between mb-1'>
+                                <p className='font-medium'>
+                                  {workout.routine_name}
+                                </p>
+                                <div className='flex gap-1'>
+                                  <button
+                                    onClick={(e) => {
+                                      editWorkout(workout, e, true);
+                                      setSelectedCalendarDate(null);
+                                    }}
+                                    className={`p-1 rounded ${theme.hover}`}
+                                    aria-label='Editar'
+                                  >
+                                    <Edit2 className='w-3 h-3' />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      deleteWorkout(workout.id, e);
+                                      setSelectedCalendarDate(null);
+                                    }}
+                                    className='p-1 rounded hover:bg-red-600 text-red-500 hover:text-white'
+                                    aria-label='Eliminar'
+                                  >
+                                    <Trash2 className='w-3 h-3' />
+                                  </button>
+                                </div>
+                              </div>
+                              {workout.exercises.map((ex, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`${theme.textSecondary} flex justify-between`}
+                                >
+                                  <span className='truncate mr-2'>{ex.name}</span>
+                                  <span className='flex-shrink-0'>
+                                    {ex.sets.length}x
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div

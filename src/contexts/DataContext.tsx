@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from './AuthContext';
+import { useNotification } from './NotificationContext';
 import type { Routine, Workout, EditingRoutine, SelectedRoutine, TabType } from '../types';
-import { getLocalDateString } from '../utils/dateUtils';
+import { getLocalDateString, parseLocalDate } from '../utils/dateUtils';
 
 interface DataContextType {
   // Data
@@ -48,6 +49,7 @@ interface DataProviderProps {
 
 export function DataProvider({ children, setActiveTab, setShowSettings, setSelectedWorkoutDetail }: DataProviderProps) {
   const { user } = useAuth();
+  const { showNotification, showConfirm } = useNotification();
 
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -139,23 +141,28 @@ export function DataProvider({ children, setActiveTab, setShowSettings, setSelec
 
       await loadData();
       setEditingRoutine(null);
+      showNotification('Rutina guardada correctamente', 'success');
     } catch (error) {
       console.error('Error guardando rutina:', error);
-      alert('Error al guardar la rutina');
+      showNotification('Error al guardar la rutina', 'error');
     }
   };
 
   const deleteRoutine = async (id: string) => {
-    if (window.confirm('¿Eliminar esta rutina?')) {
+    const routine = routines.find((r) => r.id === id);
+    const routineName = routine?.name || 'esta rutina';
+    
+    showConfirm(`¿Eliminar la rutina "${routineName}"?`, async () => {
       try {
         const { error } = await supabase.from('routines').delete().eq('id', id);
         if (error) throw error;
         setRoutines(routines.filter((r) => r.id !== id));
+        showNotification(`Rutina "${routineName}" eliminada correctamente`, 'success');
       } catch (error) {
         console.error('Error eliminando rutina:', error);
-        alert('Error al eliminar la rutina');
+        showNotification('Error al eliminar la rutina', 'error');
       }
-    }
+    });
   };
 
   // Workout operations
@@ -216,26 +223,34 @@ export function DataProvider({ children, setActiveTab, setShowSettings, setSelec
         setActiveTab('progress');
       }
       setSelectedRoutine(null);
-      alert('¡Entrenamiento guardado!');
+      showNotification('¡Entrenamiento guardado correctamente!', 'success');
     } catch (error) {
       console.error('Error guardando entrenamiento:', error);
-      alert('Error al guardar el entrenamiento');
+      showNotification('Error al guardar el entrenamiento', 'error');
     }
   };
 
   const deleteWorkout = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('¿Eliminar este entrenamiento?')) {
+    const workout = workouts.find((w) => w.id === id);
+    const workoutName = workout?.routine_name || 'este entrenamiento';
+    const workoutDate = workout?.date 
+      ? parseLocalDate(workout.date).toLocaleDateString('es-ES')
+      : '';
+    const dateText = workoutDate ? ` del ${workoutDate}` : '';
+    
+    showConfirm(`¿Eliminar el entrenamiento "${workoutName}"${dateText}?`, async () => {
       try {
         const { error } = await supabase.from('workouts').delete().eq('id', id);
         if (error) throw error;
         setWorkouts(workouts.filter((w) => w.id !== id));
         setSelectedWorkoutDetail(null);
+        showNotification(`Entrenamiento "${workoutName}" eliminado correctamente`, 'success');
       } catch (error) {
         console.error('Error eliminando entrenamiento:', error);
-        alert('Error al eliminar el entrenamiento');
+        showNotification('Error al eliminar el entrenamiento', 'error');
       }
-    }
+    });
   };
 
   const editWorkout = (workout: Workout, e: React.MouseEvent, fromCalendar = false) => {
@@ -326,10 +341,10 @@ export function DataProvider({ children, setActiveTab, setShowSettings, setSelec
         }
 
         await loadData();
-        alert('Datos importados correctamente');
+        showNotification('Datos importados correctamente', 'success');
         setShowSettings(false);
       } catch (error) {
-        alert('Error al importar: archivo JSON inválido');
+        showNotification('Error al importar: archivo JSON inválido', 'error');
         console.error(error);
       }
     };
@@ -339,25 +354,24 @@ export function DataProvider({ children, setActiveTab, setShowSettings, setSelec
 
   const clearAllData = async () => {
     if (!user) return;
-    if (
-      window.confirm(
-        '¿Estás seguro de que quieres borrar TODOS los datos? Esta acción no se puede deshacer.'
-      )
-    ) {
-      try {
-        await Promise.all([
-          supabase.from('routines').delete().eq('user_id', user.id),
-          supabase.from('workouts').delete().eq('user_id', user.id),
-        ]);
-        setRoutines([]);
-        setWorkouts([]);
-        alert('Todos los datos han sido borrados');
-        setShowSettings(false);
-      } catch (error) {
-        console.error('Error borrando datos:', error);
-        alert('Error al borrar los datos');
+    showConfirm(
+      '¿Estás seguro de que quieres borrar TODOS los datos? Esta acción no se puede deshacer.',
+      async () => {
+        try {
+          await Promise.all([
+            supabase.from('routines').delete().eq('user_id', user.id),
+            supabase.from('workouts').delete().eq('user_id', user.id),
+          ]);
+          setRoutines([]);
+          setWorkouts([]);
+          showNotification('Todos los datos han sido borrados', 'success');
+          setShowSettings(false);
+        } catch (error) {
+          console.error('Error borrando datos:', error);
+          showNotification('Error al borrar los datos', 'error');
+        }
       }
-    }
+    );
   };
 
   return (

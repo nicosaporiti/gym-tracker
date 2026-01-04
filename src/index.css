@@ -27,7 +27,7 @@ body {
   select {
     font-size: 16px !important; /* Previene zoom en iOS */
   }
-  
+
   button {
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
   }
@@ -44,4 +44,20 @@ a,
 input,
 select {
   touch-action: manipulation;
+}
+
+/* Animación para notificaciones */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
 }

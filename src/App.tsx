@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { AuthForm } from './components/AuthForm';
 import { Layout } from './components/Layout';
 import { SettingsModal } from './components/SettingsModal';
@@ -64,18 +65,20 @@ function GymTrackerWithProviders() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <DataProvider
-          setActiveTab={setActiveTab}
-          setShowSettings={setShowSettings}
-          setSelectedWorkoutDetail={setSelectedWorkoutDetail}
-        >
-          <GymTrackerApp
-            activeTab={activeTab}
+        <NotificationProvider>
+          <DataProvider
             setActiveTab={setActiveTab}
-            showSettings={showSettings}
             setShowSettings={setShowSettings}
-          />
-        </DataProvider>
+            setSelectedWorkoutDetail={setSelectedWorkoutDetail}
+          >
+            <GymTrackerApp
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              showSettings={showSettings}
+              setShowSettings={setShowSettings}
+            />
+          </DataProvider>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );
